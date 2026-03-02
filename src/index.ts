@@ -128,7 +128,9 @@ app.route({
 
 // Run the server!
 try {
-  await app.listen({ port: Number(process.env.PORT) || 3000 });
+  const port = Number(process.env.PORT) || 3000;
+  await app.listen({ host: "127.0.0.1", port });
+  app.log.info(`Server listening at http://localhost:${port}`);
 } catch (err) {
   app.log.error(err);
   process.exit(1);
