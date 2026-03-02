@@ -1,18 +1,37 @@
 // Import the framework and instantiate it
 import Fastify from 'fastify'
-const fastify = Fastify({
+import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod';
+import z from 'zod';
+
+const app = Fastify({
   logger: true
 })
 
-// Declare a route
-fastify.get('/', async function handler () {
-  return { hello: 'world' }
-})
+// Add schema validator and serializer
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
+
+app.withTypeProvider<ZodTypeProvider>().route({
+    method: 'GET',
+    url: '/',
+    schema: {
+        description: 'Hello World',
+        tags: ['hello-world'],
+        response: {
+            200: z.object({
+                message: z.string(),
+            }),
+        },
+    },
+    handler: () => {
+        return { message: 'Hello World' };
+    },
+  });
 
 // Run the server!
 try {
-  await fastify.listen({ port: Number(process.env.PORT) || 3000 })
+  await app.listen({ port: Number(process.env.PORT) || 3000 })
 } catch (err) {
-  fastify.log.error(err)
+  app.log.error(err)
   process.exit(1)
 }
