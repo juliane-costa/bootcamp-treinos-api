@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 ## Git
 
 - **SEMPRE** use [Conventional Commits](https://www.conventionalcommits.org/) para mensagens de commit. Exemplo: `feat: add start workout session endpoint`, `fix: workout plan validation`, `docs: update architecture rules`.

@@ -1,3 +1,7 @@
+---
+alwaysApply: true
+---
+
 # CLAUDE.md
 
 Este arquivo fornece orientações ao Claude Code (claude.ai/code) ao trabalhar com código neste repositório.
