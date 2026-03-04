@@ -3,7 +3,6 @@ import fastifyCors from "@fastify/cors";
 import fastifySwagger from "@fastify/swagger";
 import fastifyApiReference from "@scalar/fastify-api-reference";
 import { fromNodeHeaders } from "better-auth/node";
-import { error } from "console";
 import Fastify from "fastify";
 import {
   jsonSchemaTransform,
@@ -13,10 +12,10 @@ import {
 } from "fastify-type-provider-zod";
 import z from "zod";
 
+import { NotFoundError } from "./errors/index.js";
 import { Weekday } from "./generated/prisma/enums.js";
 import { auth } from "./lib/auth.js";
 import { CreateWorkoutPlan } from "./usecases/CreateWorkoutPlan.js";
-import { NotFoundError } from "./errors/index.js";
 
 const app = Fastify({
   logger: true,
@@ -121,6 +120,14 @@ app.withTypeProvider<ZodTypeProvider>().route({
         message: z.string(),
         code: z.string(),
       }),
+      404: z.object({
+        message: z.string(),
+        code: z.string(),
+      }),
+      500: z.object({
+        message: z.string(),
+        code: z.string(),
+      }),
     },
   },
   handler: async (request, reply) => {
@@ -143,6 +150,12 @@ app.withTypeProvider<ZodTypeProvider>().route({
       return reply.status(201).send(result);
     } catch (error) {
       app.log.error(error);
+      if (error instanceof NotFoundError) {
+        return reply.status(404).send({
+          message: error.message,
+          code: "NOT_FOUND",
+        });
+      }
       return reply.status(500).send({
         message: "Internal server error",
         code: "INTERNAL_SERVER_ERROR",
