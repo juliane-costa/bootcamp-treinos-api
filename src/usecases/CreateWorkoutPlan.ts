@@ -11,6 +11,7 @@ interface InputDto {
     weekday: Weekday;
     isRest: boolean;
     estimatedDurationInSeconds: number;
+    coverImageUrl?: string;
     exercises: Array<{
       order: number;
       name: string;
@@ -29,6 +30,7 @@ interface OutputDto {
     weekday: Weekday;
     isRest: boolean;
     estimatedDurationInSeconds: number;
+    coverImageUrl?: string;
     exercises: Array<{
       order: number;
       name: string;
@@ -67,6 +69,7 @@ export class CreateWorkoutPlan {
               weekday: workoutDay.weekday,
               isRestDay: workoutDay.isRest,
               estimatedDurationInSeconds: workoutDay.estimatedDurationInSeconds,
+              coverImageUrl: workoutDay.coverImageUrl ?? undefined,
               exercises: {
                 create: workoutDay.exercises.map((exercise) => ({
                   name: exercise.name,
@@ -102,6 +105,7 @@ export class CreateWorkoutPlan {
           weekday: day.weekday,
           isRest: day.isRestDay,
           estimatedDurationInSeconds: day.estimatedDurationInSeconds,
+          coverImageUrl: day.coverImageUrl ?? undefined,
           exercises: day.exercises.map((exercise) => ({
             order: exercise.order,
             name: exercise.name,
