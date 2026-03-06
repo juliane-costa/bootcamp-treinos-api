@@ -98,7 +98,7 @@ export const aiRoutes = async (app: FastifyInstance) => {
         model: openai("gpt-4o-mini"),
         system: SYSTEM_PROMPT,
         messages: await convertToModelMessages(messages),
-        stopWhen: stepCountIs(5),
+        stopWhen: stepCountIs(10),
         tools: {
           getUserTrainData: tool({
             description:
@@ -152,7 +152,7 @@ export const aiRoutes = async (app: FastifyInstance) => {
                     name: z
                       .string()
                       .describe("Nome do dia (ex: Peito e Tríceps, Descanso)"),
-                    weekDay: z.enum(Weekday).describe("Dia da semana"),
+                    weekday: z.enum(Weekday).describe("Dia da semana"),
                     isRest: z
                       .boolean()
                       .describe(
@@ -199,10 +199,7 @@ export const aiRoutes = async (app: FastifyInstance) => {
               return createWorkoutPlan.execute({
                 userId,
                 name: input.name,
-                workoutDays: input.workoutDays.map((day) => ({
-                  ...day,
-                  weekday: day.weekDay,
-                })),
+                workoutDays: input.workoutDays,
               });
             },
           }),

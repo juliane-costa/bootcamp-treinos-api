@@ -2,66 +2,75 @@ import z from "zod";
 
 import { Weekday } from "../generated/prisma/enums.js";
 
+
+
 export const ErrorSchema = z.object({
-  message: z.string(),
+  error: z.string(),
   code: z.string(),
 });
 
-export const StartWorkoutSessionParamsSchema = z.object({
-  workoutPlanId: z.uuid(),
-  workoutDayId: z.uuid(),
-});
-
-export const StartWorkoutSessionResponseSchema = z.object({
+export const StartWorkoutSessionSchema = z.object({
   userWorkoutSessionId: z.uuid(),
-});
-
-export const UpdateWorkoutSessionParamsSchema = z.object({
-  workoutPlanId: z.uuid(),
-  workoutDayId: z.uuid(),
-  sessionId: z.uuid(),
 });
 
 export const UpdateWorkoutSessionBodySchema = z.object({
   completedAt: z.iso.datetime(),
 });
 
-export const UpdateWorkoutSessionResponseSchema = z.object({
+export const UpdateWorkoutSessionSchema = z.object({
   id: z.uuid(),
-  completedAt: z.string(),
-  startedAt: z.string(),
+  startedAt: z.iso.datetime(),
+  completedAt: z.iso.datetime(),
 });
 
-export const GetWorkoutPlanParamsSchema = z.object({
-  workoutPlanId: z.uuid(),
+export const StatsQuerySchema = z.object({
+  from: z.iso.date(),
+  to: z.iso.date(),
 });
 
-export const GetWorkoutPlanResponseSchema = z.object({
-  id: z.uuid(),
-  name: z.string(),
-  workoutDays: z.array(
+export const StatsSchema = z.object({
+  workoutStreak: z.number(),
+  consistencyByDay: z.record(
+    z.iso.date(),
     z.object({
+      workoutDayCompleted: z.boolean(),
+      workoutDayStarted: z.boolean(),
+    })
+  ),
+  completedWorkoutsCount: z.number(),
+  conclusionRate: z.number(),
+  totalTimeInSeconds: z.number(),
+});
+
+export const HomeDataSchema = z.object({
+  activeWorkoutPlanId: z.uuid().optional(),
+  todayWorkoutDay: z
+    .object({
+      workoutPlanId: z.uuid(),
       id: z.uuid(),
-      weekDay: z.enum(Weekday),
       name: z.string(),
       isRest: z.boolean(),
-      coverImageUrl: z.url().optional(),
+      weekDay: z.enum(Weekday),
       estimatedDurationInSeconds: z.number(),
+      coverImageUrl: z.url().optional(),
       exercisesCount: z.number(),
+    })
+    .optional(),
+  workoutStreak: z.number(),
+  consistencyByDay: z.record(
+    z.iso.date(),
+    z.object({
+      workoutDayCompleted: z.boolean(),
+      workoutDayStarted: z.boolean(),
     })
   ),
 });
 
-export const GetWorkoutDayParamsSchema = z.object({
-  workoutPlanId: z.uuid(),
-  workoutDayId: z.uuid(),
-});
-
-export const GetWorkoutDayResponseSchema = z.object({
+export const GetWorkoutDaySchema = z.object({
   id: z.uuid(),
   name: z.string(),
   isRest: z.boolean(),
-  coverImageUrl: z.string().optional(),
+  coverImageUrl: z.url().optional(),
   estimatedDurationInSeconds: z.number(),
   weekDay: z.enum(Weekday),
   exercises: z.array(
@@ -73,64 +82,68 @@ export const GetWorkoutDayResponseSchema = z.object({
       sets: z.number(),
       reps: z.number(),
       restTimeInSeconds: z.number(),
-    }),
+    })
   ),
   sessions: z.array(
     z.object({
       id: z.uuid(),
       workoutDayId: z.uuid(),
-      startedAt: z.string().optional(),
-      completedAt: z.string().optional(),
-    }),
+      startedAt: z.iso.date().optional(),
+      completedAt: z.iso.date().optional(),
+    })
   ),
 });
 
-export const GetHomeParamsSchema = z.object({
-  date: z.iso.date(),
-});
-
-export const GetHomeResponseSchema = z.object({
-  activeWorkoutPlanId: z.string(),
-  todayWorkoutDay: z
-    .object({
-      workoutPlanId: z.string(),
-      id: z.string(),
+export const GetWorkoutPlanSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  workoutDays: z.array(
+    z.object({
+      id: z.uuid(),
+      Weekday: z.enum(Weekday),
       name: z.string(),
       isRest: z.boolean(),
-      weekDay: z.string(),
+      coverImageUrl: z.url().optional(),
       estimatedDurationInSeconds: z.number(),
-      coverImageUrl: z.string().optional(),
       exercisesCount: z.number(),
     })
-    .nullable(),
-  workoutStreak: z.number(),
-  consistencyByDay: z.record(
-    z.string(),
-    z.object({
-      workoutDayCompleted: z.boolean(),
-      workoutDayStarted: z.boolean(),
-    }),
   ),
 });
 
-export const GetStatsQuerySchema = z.object({
-  from: z.iso.date(),
-  to: z.iso.date(),
+export const ListWorkoutPlansQuerySchema = z.object({
+  active: z
+    .enum(["true", "false"])
+    .transform((v) => v === "true")
+    .optional(),
 });
 
-export const GetStatsResponseSchema = z.object({
-  workoutStreak: z.number(),
-  consistencyByDay: z.record(
-    z.iso.date(),
-    z.object({
-      workoutDayCompleted: z.boolean(),
-      workoutDayStarted: z.boolean(),
-    }),
-  ),
-  completedWorkoutsCount: z.number(),
-  conclusionRate: z.number(),
-  totalTimeInSeconds: z.number(),
-});
+export const ListWorkoutPlansSchema = z.array(
+  z.object({
+    id: z.uuid(),
+    name: z.string(),
+    isActive: z.boolean(),
+    workoutDays: z.array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        Weekday: z.enum(Weekday),
+        isRest: z.boolean(),
+        estimatedDurationInSeconds: z.number(),
+        coverImageUrl: z.url().optional(),
+        exercises: z.array(
+          z.object({
+            id: z.uuid(),
+            order: z.number(),
+            name: z.string(),
+            sets: z.number(),
+            reps: z.number(),
+            restTimeInSeconds: z.number(),
+          })
+        ),
+      })
+    ),
+  })
+);
 
 export const UpsertUserTrainDataBodySchema = z.object({
   weightInGrams: z.number().min(0),
@@ -162,7 +175,7 @@ export const WorkoutPlanSchema = z.object({
   workoutDays: z.array(
     z.object({
       name: z.string().trim().min(1),
-      weekday: z.enum(Weekday),
+      Weekday: z.enum(Weekday),
       isRest: z.boolean().default(false),
       estimatedDurationInSeconds: z.number().min(1),
       coverImageUrl: z.url().optional(),
@@ -173,8 +186,8 @@ export const WorkoutPlanSchema = z.object({
           sets: z.number().min(1),
           reps: z.number().min(1),
           restTimeInSeconds: z.number().min(1),
-        }),
+        })
       ),
-    }),
+    })
   ),
 });
