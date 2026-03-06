@@ -1,4 +1,5 @@
-// Import the framework and instantiate it
+import "dotenv/config";
+
 import fastifyCors from "@fastify/cors";
 import fastifySwagger from "@fastify/swagger";
 import fastifyApiReference from "@scalar/fastify-api-reference";
@@ -11,8 +12,9 @@ import {
 } from "fastify-type-provider-zod";
 import z from "zod";
 
-import { NotFoundError } from "./errors/index.js";
 import { auth } from "./lib/auth.js";
+import { env } from "./lib/env.js";
+import { aiRoutes } from "./routes/ai.js";
 import { homeRoutes } from "./routes/home.js";
 import { meRoutes } from "./routes/me.js";
 import { statsRoutes } from "./routes/stats.js";
@@ -22,22 +24,20 @@ const app = Fastify({
   logger: true,
 });
 
-// Add schema validator and serializer
 app.setValidatorCompiler(validatorCompiler);
 app.setSerializerCompiler(serializerCompiler);
 
-//documentacao
 await app.register(fastifySwagger, {
   openapi: {
     info: {
       title: "Bootcamp Treinos API",
-      description: "API para o Bootcamp Treinos",
+      description: "API para o bootcamp de treinos do FSC",
       version: "1.0.0",
     },
     servers: [
       {
-        description: "LocalHost",
-        url: "http://localhost:8080",
+        description: "API Base URL",
+        url: env.API_BASE_URL,
       },
     ],
   },
@@ -45,7 +45,7 @@ await app.register(fastifySwagger, {
 });
 
 await app.register(fastifyCors, {
-  origin: ["http://localhost:8080"],
+  origin: [env.WEB_APP_BASE_URL],
   credentials: true,
 });
 
@@ -67,16 +67,20 @@ await app.register(fastifyApiReference, {
   },
 });
 
-//routes
-await app.register(workoutPlanRoutes, { prefix: "/workout-plans" });
+// RESTful
+// Routes
 await app.register(homeRoutes, { prefix: "/home" });
-await app.register(statsRoutes, { prefix: "/stats" });
 await app.register(meRoutes, { prefix: "/me" });
-//endregion routes
+await app.register(statsRoutes, { prefix: "/stats" });
+await app.register(workoutPlanRoutes, { prefix: "/workout-plans" });
+await app.register(aiRoutes, { prefix: "/ai" });
 
 app.withTypeProvider<ZodTypeProvider>().route({
   method: "GET",
   url: "/swagger.json",
+  schema: {
+    hide: true,
+  },
   handler: async () => {
     return app.swagger();
   },
@@ -86,8 +90,8 @@ app.withTypeProvider<ZodTypeProvider>().route({
   method: "GET",
   url: "/",
   schema: {
-    description: "Hello World",
-    tags: ["ABC"],
+    description: "Hello world",
+    tags: ["Hello World"],
     response: {
       200: z.object({
         message: z.string(),
@@ -95,14 +99,18 @@ app.withTypeProvider<ZodTypeProvider>().route({
     },
   },
   handler: () => {
-    return { message: "Hello World" };
+    return {
+      message: "Hello World",
+    };
   },
 });
 
-// Register authentication endpoint
 app.route({
   method: ["GET", "POST"],
   url: "/api/auth/*",
+  schema: {
+    hide: true,
+  },
   async handler(request, reply) {
     try {
       // Construct request URL
@@ -113,30 +121,20 @@ app.route({
       Object.entries(request.headers).forEach(([key, value]) => {
         if (value) headers.append(key, value.toString());
       });
-
       // Create Fetch API-compatible request
       const req = new Request(url.toString(), {
         method: request.method,
         headers,
         ...(request.body ? { body: JSON.stringify(request.body) } : {}),
       });
-
       // Process authentication request
       const response = await auth.handler(req);
-
       // Forward response to client
       reply.status(response.status);
       response.headers.forEach((value, key) => reply.header(key, value));
       reply.send(response.body ? await response.text() : null);
-    } catch (error: unknown) {
+    } catch (error) {
       app.log.error(error);
-      if (error instanceof NotFoundError) {
-        return reply.status(404).send({
-          message: error.message,
-          code: "NOT_FOUND",
-        });
-      }
-
       reply.status(500).send({
         error: "Internal authentication error",
         code: "AUTH_FAILURE",
@@ -145,11 +143,8 @@ app.route({
   },
 });
 
-// Run the server!
 try {
-  const port = Number(process.env.PORT) || 8080;
-  await app.listen({ host: "127.0.0.1", port });
-  app.log.info(`Server listening at http://localhost:${port}`);
+  await app.listen({ host: "0.0.0.0", port: env.PORT });
 } catch (err) {
   app.log.error(err);
   process.exit(1);
