@@ -1,6 +1,6 @@
 import {
-  ConflictError,
   NotFoundError,
+  SessionAlreadyStartedError,
   WorkoutPlanNotActiveError,
 } from "../errors/index.js";
 import { prisma } from "../lib/db.js";
@@ -34,10 +34,7 @@ export class StartWorkoutSession {
     }
 
     const workoutDay = await prisma.workoutDay.findUnique({
-      where: {
-        id: dto.workoutDayId,
-        workoutPlanId: dto.workoutPlanId,
-      },
+      where: { id: dto.workoutDayId, workoutPlanId: dto.workoutPlanId },
     });
 
     if (!workoutDay) {
@@ -49,19 +46,20 @@ export class StartWorkoutSession {
     });
 
     if (existingSession) {
-      throw new ConflictError("Workout session already started for this day");
+      throw new SessionAlreadyStartedError(
+        "A session has already been started for this day",
+      );
     }
 
-    const workoutSession = await prisma.workoutSession.create({
+    const session = await prisma.workoutSession.create({
       data: {
-        workoutPlanId: dto.workoutPlanId,
         workoutDayId: dto.workoutDayId,
         startedAt: new Date(),
       },
     });
 
     return {
-      userWorkoutSessionId: workoutSession.id,
+      userWorkoutSessionId: session.id,
     };
   }
 }

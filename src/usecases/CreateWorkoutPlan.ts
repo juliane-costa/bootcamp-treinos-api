@@ -1,14 +1,13 @@
 import { NotFoundError } from "../errors/index.js";
-import { Weekday } from "../generated/prisma/enums.js";
+import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";
 
-//Data Transfer Object
 interface InputDto {
   userId: string;
   name: string;
   workoutDays: Array<{
     name: string;
-    weekday: Weekday;
+    weekDay: WeekDay;
     isRest: boolean;
     estimatedDurationInSeconds: number;
     coverImageUrl?: string;
@@ -27,7 +26,7 @@ interface OutputDto {
   name: string;
   workoutDays: Array<{
     name: string;
-    weekday: Weekday;
+    weekDay: WeekDay;
     isRest: boolean;
     estimatedDurationInSeconds: number;
     coverImageUrl?: string;
@@ -48,9 +47,6 @@ export class CreateWorkoutPlan {
         isActive: true,
       },
     });
-    // Transaction - garantir atomicidade
-    //ACID
-    //Ou atualiza e vc cria, ou nao faz nenhum dos dois
     return prisma.$transaction(async (tx) => {
       if (existingWorkoutPlan) {
         await tx.workoutPlan.update({
@@ -60,16 +56,17 @@ export class CreateWorkoutPlan {
       }
       const workoutPlan = await tx.workoutPlan.create({
         data: {
+          id: crypto.randomUUID(),
           name: dto.name,
           userId: dto.userId,
           isActive: true,
           workoutDays: {
             create: dto.workoutDays.map((workoutDay) => ({
               name: workoutDay.name,
-              weekday: workoutDay.weekday,
-              isRestDay: workoutDay.isRest,
+              weekDay: workoutDay.weekDay,
+              isRest: workoutDay.isRest,
               estimatedDurationInSeconds: workoutDay.estimatedDurationInSeconds,
-              coverImageUrl: workoutDay.coverImageUrl ?? undefined,
+              coverImageUrl: workoutDay.coverImageUrl,
               exercises: {
                 create: workoutDay.exercises.map((exercise) => ({
                   name: exercise.name,
@@ -85,7 +82,7 @@ export class CreateWorkoutPlan {
       });
       const result = await tx.workoutPlan.findUnique({
         where: { id: workoutPlan.id },
-        include: {//include é um left join
+        include: {
           workoutDays: {
             include: {
               exercises: true,
@@ -96,14 +93,13 @@ export class CreateWorkoutPlan {
       if (!result) {
         throw new NotFoundError("Workout plan not found");
       }
-
       return {
         id: result.id,
         name: result.name,
         workoutDays: result.workoutDays.map((day) => ({
           name: day.name,
-          weekday: day.weekday,
-          isRest: day.isRestDay,
+          weekDay: day.weekDay,
+          isRest: day.isRest,
           estimatedDurationInSeconds: day.estimatedDurationInSeconds,
           coverImageUrl: day.coverImageUrl ?? undefined,
           exercises: day.exercises.map((exercise) => ({

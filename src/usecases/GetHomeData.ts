@@ -1,12 +1,12 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 
-import { Weekday } from "../generated/prisma/enums.js";
+import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";
 
 dayjs.extend(utc);
 
-const Weekday_MAP: Record<number, string> = {
+const WEEKDAY_MAP: Record<number, string> = {
   0: "SUNDAY",
   1: "MONDAY",
   2: "TUESDAY",
@@ -28,7 +28,7 @@ interface OutputDto {
     id: string;
     name: string;
     isRest: boolean;
-    Weekday: Weekday;
+    weekDay: WeekDay;
     estimatedDurationInSeconds: number;
     coverImageUrl?: string;
     exercisesCount: number;
@@ -53,15 +53,15 @@ export class GetHomeData {
         workoutDays: {
           include: {
             exercises: true,
-            workoutSessions: true,
+            sessions: true,
           },
         },
       },
     });
 
-    const todayWeekday = Weekday_MAP[currentDate.day()];
+    const todayWeekDay = WEEKDAY_MAP[currentDate.day()];
     const todayWorkoutDay = workoutPlan?.workoutDays.find(
-      (day) => day.weekday === todayWeekday
+      (day) => day.weekDay === todayWeekDay
     );
 
     const weekStart = currentDate.day(0).startOf("day");
@@ -118,8 +118,8 @@ export class GetHomeData {
               workoutPlanId: workoutPlan.id,
               id: todayWorkoutDay.id,
               name: todayWorkoutDay.name,
-              isRest: todayWorkoutDay.isRestDay,
-              Weekday: todayWorkoutDay.weekday,
+              isRest: todayWorkoutDay.isRest,
+              weekDay: todayWorkoutDay.weekDay,
               estimatedDurationInSeconds:
                 todayWorkoutDay.estimatedDurationInSeconds,
               coverImageUrl: todayWorkoutDay.coverImageUrl ?? undefined,
@@ -134,15 +134,15 @@ export class GetHomeData {
   private async calculateStreak(
     workoutPlanId: string,
     workoutDays: Array<{
-      weekday: string;
-      isRestDay: boolean;
-      workoutSessions: Array<{ startedAt: Date; completedAt: Date | null }>;
+      weekDay: string;
+      isRest: boolean;
+      sessions: Array<{ startedAt: Date; completedAt: Date | null }>;
     }>,
     currentDate: dayjs.Dayjs
   ): Promise<number> {
-    const planWeekdays = new Set(workoutDays.map((d) => d.weekday));
-    const restWeekdays = new Set(
-      workoutDays.filter((d) => d.isRestDay).map((d) => d.weekday)
+    const planWeekDays = new Set(workoutDays.map((d) => d.weekDay));
+    const restWeekDays = new Set(
+      workoutDays.filter((d) => d.isRest).map((d) => d.weekDay)
     );
 
     const allSessions = await prisma.workoutSession.findMany({
@@ -161,14 +161,14 @@ export class GetHomeData {
     let day = currentDate;
 
     for (let i = 0; i < 365; i++) {
-      const Weekday = Weekday_MAP[day.day()];
+      const weekDay = WEEKDAY_MAP[day.day()];
 
-      if (!planWeekdays.has(Weekday)) {
+      if (!planWeekDays.has(weekDay)) {
         day = day.subtract(1, "day");
         continue;
       }
 
-      if (restWeekdays.has(Weekday)) {
+      if (restWeekDays.has(weekDay)) {
         streak++;
         day = day.subtract(1, "day");
         continue;

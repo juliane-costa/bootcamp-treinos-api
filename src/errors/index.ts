@@ -12,9 +12,9 @@ export class WorkoutPlanNotActiveError extends Error {
   }
 }
 
-export class ConflictError extends Error {
+export class SessionAlreadyStartedError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "ConflictError";
+    this.name = "SessionAlreadyStartedError";
   }
 }

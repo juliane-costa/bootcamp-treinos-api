@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -28,18 +34,17 @@ model User {
 }
 
 model WorkoutPlan {
-  id              String           @id @default(uuid())
-  name            String
-  userId          String
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isActive        Boolean          @default(true)
-  createdAt       DateTime         @default(now()) @db.Timestamptz()
-  updatedAt       DateTime         @updatedAt @db.Timestamptz()
-  workoutDays     WorkoutDay[]
-  workoutSessions WorkoutSession[]
+  id          String       @id @default(uuid())
+  name        String
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutDays WorkoutDay[]
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now()) @db.Timestamptz()
+  updatedAt   DateTime     @updatedAt @db.Timestamptz()
 }
 
-enum Weekday {
+enum WeekDay {
   MONDAY
   TUESDAY
   WEDNESDAY
@@ -54,14 +59,14 @@ model WorkoutDay {
   name                       String
   workoutPlanId              String
   workoutPlan                WorkoutPlan       @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
-  isRestDay                  Boolean           @default(false)
+  isRest                     Boolean           @default(false)
+  weekDay                    WeekDay
+  exercises                  WorkoutExercise[]
   estimatedDurationInSeconds Int
   coverImageUrl              String?
-  weekday                    Weekday
   createdAt                  DateTime          @default(now()) @db.Timestamptz()
   updatedAt                  DateTime          @updatedAt @db.Timestamptz()
-  exercises                  WorkoutExercise[]
-  workoutSessions            WorkoutSession[]
+  sessions                   WorkoutSession[]
 }
 
 model WorkoutExercise {
@@ -78,15 +83,13 @@ model WorkoutExercise {
 }
 
 model WorkoutSession {
-  id            String      @id @default(uuid())
-  workoutPlanId String
-  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
-  workoutDayId  String
-  workoutDay    WorkoutDay  @relation(fields: [workoutDayId], references: [id], onDelete: Cascade)
-  startedAt     DateTime    @db.Timestamptz()
-  completedAt   DateTime?   @db.Timestamptz()
-  createdAt     DateTime    @default(now()) @db.Timestamptz()
-  updatedAt     DateTime    @updatedAt @db.Timestamptz()
+  id           String     @id @default(uuid())
+  workoutDayId String
+  workoutDay   WorkoutDay @relation(fields: [workoutDayId], references: [id], onDelete: Cascade)
+  startedAt    DateTime   @db.Timestamptz()
+  completedAt  DateTime?  @db.Timestamptz()
+  createdAt    DateTime   @default(now()) @db.Timestamptz()
+  updatedAt    DateTime   @updatedAt @db.Timestamptz()
 }
 
 model Session {
@@ -118,8 +121,8 @@ model Account {
   refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now()) @db.Timestamptz()
-  updatedAt             DateTime  @updatedAt @db.Timestamptz()
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([userId])
   @@map("account")
@@ -130,8 +133,8 @@ model Verification {
   identifier String
   value      String
   expiresAt  DateTime
-  createdAt  DateTime @default(now()) @db.Timestamptz()
-  updatedAt  DateTime @updatedAt @db.Timestamptz()
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([identifier])
   @@map("verification")

@@ -111,7 +111,7 @@ interface InputDto {
   name: string;
   workoutDays: Array<{
     name: string;
-    weekDay: WeekDay;
+    WeekDay: WeekDay;
     isRest: boolean;
     estimatedDurationInSeconds: number;
     exercises: Array<{
@@ -129,7 +129,7 @@ interface OutputDto {
   name: string;
   workoutDays: Array<{
     name: string;
-    weekDay: WeekDay;
+    WeekDay: WeekDay;
     isRest: boolean;
     estimatedDurationInSeconds: number;
     exercises: Array<{
@@ -166,7 +166,7 @@ export class CreateWorkoutPlan {
           workoutDays: {
             create: dto.workoutDays.map((workoutDay) => ({
               name: workoutDay.name,
-              weekDay: workoutDay.weekDay,
+              WeekDay: workoutDay.WeekDay,
               isRest: workoutDay.isRest,
               estimatedDurationInSeconds: workoutDay.estimatedDurationInSeconds,
               exercises: {
@@ -200,7 +200,7 @@ export class CreateWorkoutPlan {
         name: result.name,
         workoutDays: result.workoutDays.map((day) => ({
           name: day.name,
-          weekDay: day.weekDay,
+          WeekDay: day.WeekDay,
           isRest: day.isRest,
           estimatedDurationInSeconds: day.estimatedDurationInSeconds,
           exercises: day.exercises.map((exercise) => ({

@@ -77,7 +77,7 @@ Swagger JSON em `/swagger.json`, Scalar UI em `/docs`. Endpoints de auth sao mes
 - Classes: `PascalCase` (ex: `CreateWorkoutPlan`)
 - Variaveis/funcoes: `camelCase`
 - Prisma models: `PascalCase`. Tabelas usam `@@map("snake_case")` onde aplicavel
-- Enums: membros em `UPPER_CASE` (ex: `Weekday.MONDAY`)
+- Enums: membros em `UPPER_CASE` (ex: `WeekDay.MONDAY`)
 
 ### Routes
 

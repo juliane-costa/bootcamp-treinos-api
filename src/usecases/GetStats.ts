@@ -6,7 +6,7 @@ import { prisma } from "../lib/db.js";
 
 dayjs.extend(utc);
 
-const WEEKDAY_MAP: Record<number, string> = {
+const WeekDay_MAP: Record<number, string> = {
   0: "SUNDAY",
   1: "MONDAY",
   2: "TUESDAY",
@@ -45,7 +45,7 @@ export class GetStats {
       where: { userId: dto.userId, isActive: true },
       include: {
         workoutDays: {
-          include: { workoutSessions: true },
+          include: { sessions: true },
         },
       },
     });
@@ -102,10 +102,10 @@ export class GetStats {
     const workoutStreak = await this.calculateStreak(
       workoutPlan.id,
       workoutPlan.workoutDays.map((day) => ({
-        weekDay: day.weekday,
-        isRest: day.isRestDay,
+        weekDay: day.weekDay,
+        isRest: day.isRest,
       })),
-      toDate
+      toDate,
     );
 
     return {
@@ -123,11 +123,11 @@ export class GetStats {
       weekDay: string;
       isRest: boolean;
     }>,
-    currentDate: dayjs.Dayjs
+    currentDate: dayjs.Dayjs,
   ): Promise<number> {
     const planWeekDays = new Set(workoutDays.map((d) => d.weekDay));
     const restWeekDays = new Set(
-      workoutDays.filter((d) => d.isRest).map((d) => d.weekDay)
+      workoutDays.filter((d) => d.isRest).map((d) => d.weekDay),
     );
 
     const allSessions = await prisma.workoutSession.findMany({
@@ -139,21 +139,21 @@ export class GetStats {
     });
 
     const completedDates = new Set(
-      allSessions.map((s) => dayjs.utc(s.startedAt).format("YYYY-MM-DD"))
+      allSessions.map((s) => dayjs.utc(s.startedAt).format("YYYY-MM-DD")),
     );
 
     let streak = 0;
     let day = currentDate;
 
     for (let i = 0; i < 365; i++) {
-      const weekDay = WEEKDAY_MAP[day.day()];
+      const WeekDay = WeekDay_MAP[day.day()];
 
-      if (!planWeekDays.has(weekDay)) {
+      if (!planWeekDays.has(WeekDay)) {
         day = day.subtract(1, "day");
         continue;
       }
 
-      if (restWeekDays.has(weekDay)) {
+      if (restWeekDays.has(WeekDay)) {
         day = day.subtract(1, "day");
         continue;
       }

@@ -1,56 +1,70 @@
-import { Weekday } from "../generated/prisma/enums.js";
+import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";
 
 interface InputDto {
   userId: string;
+  active?: boolean;
 }
 
 interface OutputDto {
-  workoutPlans: Array<{
+  id: string;
+  name: string;
+  isActive: boolean;
+  workoutDays: Array<{
     id: string;
     name: string;
-    isActive: boolean;
-    workoutDays: Array<{
+    weekDay: WeekDay;
+    isRest: boolean;
+    estimatedDurationInSeconds: number;
+    coverImageUrl?: string;
+    exercises: Array<{
       id: string;
+      order: number;
       name: string;
-      weekday: Weekday;
-      isRest: boolean;
-      estimatedDurationInSeconds: number;
-      exercisesCount: number;
+      sets: number;
+      reps: number;
+      restTimeInSeconds: number;
     }>;
   }>;
 }
 
 export class ListWorkoutPlans {
-  async execute(dto: InputDto): Promise<OutputDto> {
+  async execute(dto: InputDto): Promise<OutputDto[]> {
     const workoutPlans = await prisma.workoutPlan.findMany({
-      where: { userId: dto.userId },
-      orderBy: { createdAt: "desc" },
+      where: {
+        userId: dto.userId,
+        ...(dto.active !== undefined ? { isActive: dto.active } : {}),
+      },
       include: {
         workoutDays: {
           include: {
-            _count: {
-              select: { exercises: true },
-            },
+            exercises: { orderBy: { order: "asc" } },
           },
         },
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    return {
-      workoutPlans: workoutPlans.map((plan) => ({
-        id: plan.id,
-        name: plan.name,
-        isActive: plan.isActive,
-        workoutDays: plan.workoutDays.map((day) => ({
-          id: day.id,
-          name: day.name,
-          weekday: day.weekday,
-          isRest: day.isRestDay,
-          estimatedDurationInSeconds: day.estimatedDurationInSeconds,
-          exercisesCount: day._count.exercises,
+    return workoutPlans.map((plan) => ({
+      id: plan.id,
+      name: plan.name,
+      isActive: plan.isActive,
+      workoutDays: plan.workoutDays.map((day) => ({
+        id: day.id,
+        name: day.name,
+        weekDay: day.weekDay,
+        isRest: day.isRest,
+        estimatedDurationInSeconds: day.estimatedDurationInSeconds,
+        coverImageUrl: day.coverImageUrl ?? undefined,
+        exercises: day.exercises.map((exercise) => ({
+          id: exercise.id,
+          order: exercise.order,
+          name: exercise.name,
+          sets: exercise.sets,
+          reps: exercise.reps,
+          restTimeInSeconds: exercise.restTimeInSeconds,
         })),
       })),
-    };
+    }));
   }
 }

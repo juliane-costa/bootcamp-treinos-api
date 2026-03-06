@@ -11,7 +11,7 @@ import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import z from "zod";
 
-import { Weekday } from "../generated/prisma/enums.js";
+import { WeekDay } from "../generated/prisma/enums.js";
 import { auth } from "../lib/auth.js";
 import { CreateWorkoutPlan } from "../usecases/CreateWorkoutPlan.js";
 import { GetUserTrainData } from "../usecases/GetUserTrainData.js";
@@ -152,7 +152,7 @@ export const aiRoutes = async (app: FastifyInstance) => {
                     name: z
                       .string()
                       .describe("Nome do dia (ex: Peito e Tríceps, Descanso)"),
-                    weekday: z.enum(Weekday).describe("Dia da semana"),
+                    weekDay: z.enum(WeekDay).describe("Dia da semana"),
                     isRest: z
                       .boolean()
                       .describe(

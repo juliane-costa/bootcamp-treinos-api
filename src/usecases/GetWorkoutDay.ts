@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 
 import { NotFoundError } from "../errors/index.js";
-import { Weekday } from "../generated/prisma/enums.js";
+import { WeekDay } from "../generated/prisma/enums.js";
 import { prisma } from "../lib/db.js";
 
 dayjs.extend(utc);
@@ -19,13 +19,13 @@ interface OutputDto {
   isRest: boolean;
   coverImageUrl?: string;
   estimatedDurationInSeconds: number;
-  weekDay: Weekday;
+  weekDay: WeekDay;
   exercises: Array<{
     id: string;
     name: string;
     order: number;
     workoutDayId: string;
-    sets: number; 
+    sets: number;
     reps: number;
     restTimeInSeconds: number;
   }>;
@@ -43,22 +43,15 @@ export class GetWorkoutDay {
       where: { id: dto.workoutPlanId },
     });
 
-    if (!workoutPlan) {
-      throw new NotFoundError("Workout plan not found");
-    }
-
-    if (workoutPlan.userId !== dto.userId) {
+    if (!workoutPlan || workoutPlan.userId !== dto.userId) {
       throw new NotFoundError("Workout plan not found");
     }
 
     const workoutDay = await prisma.workoutDay.findUnique({
-      where: {
-        id: dto.workoutDayId,
-        workoutPlanId: dto.workoutPlanId,
-      },
+      where: { id: dto.workoutDayId, workoutPlanId: dto.workoutPlanId },
       include: {
         exercises: { orderBy: { order: "asc" } },
-        workoutSessions: true,
+        sessions: true,
       },
     });
 
@@ -69,10 +62,10 @@ export class GetWorkoutDay {
     return {
       id: workoutDay.id,
       name: workoutDay.name,
-      isRest: workoutDay.isRestDay,
+      isRest: workoutDay.isRest,
       coverImageUrl: workoutDay.coverImageUrl ?? undefined,
       estimatedDurationInSeconds: workoutDay.estimatedDurationInSeconds,
-      weekDay: workoutDay.weekday,
+      weekDay: workoutDay.weekDay,
       exercises: workoutDay.exercises.map((exercise) => ({
         id: exercise.id,
         name: exercise.name,
@@ -82,7 +75,7 @@ export class GetWorkoutDay {
         reps: exercise.reps,
         restTimeInSeconds: exercise.restTimeInSeconds,
       })),
-      sessions: workoutDay.workoutSessions.map((session) => ({
+      sessions: workoutDay.sessions.map((session) => ({
         id: session.id,
         workoutDayId: session.workoutDayId,
         startedAt: dayjs.utc(session.startedAt).format("YYYY-MM-DD"),

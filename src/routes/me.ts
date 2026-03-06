@@ -32,7 +32,7 @@ export const meRoutes = async (app: FastifyInstance) => {
         });
         if (!session) {
           return reply.status(401).send({
-            message: "Unauthorized",
+            error: "Unauthorized",
             code: "UNAUTHORIZED",
           });
         }
@@ -46,7 +46,7 @@ export const meRoutes = async (app: FastifyInstance) => {
       } catch (error) {
         app.log.error(error);
         return reply.status(500).send({
-          message: "Internal server error",
+          error: "Internal server error",
           code: "INTERNAL_SERVER_ERROR",
         });
       }
@@ -73,7 +73,7 @@ export const meRoutes = async (app: FastifyInstance) => {
         });
         if (!session) {
           return reply.status(401).send({
-            message: "Unauthorized",
+            error: "Unauthorized",
             code: "UNAUTHORIZED",
           });
         }
@@ -91,7 +91,7 @@ export const meRoutes = async (app: FastifyInstance) => {
       } catch (error) {
         app.log.error(error);
         return reply.status(500).send({
-          message: "Internal server error",
+          error: "Internal server error",
           code: "INTERNAL_SERVER_ERROR",
         });
       }
